@@ -3,6 +3,7 @@
 # The top level targets link in the two .o files for now.
 #
 TARGETS += rgb-test
+TARGETS += x2-display
 
 LEDSCAPE_OBJS = ledscape.o pru.o bitslice.o util.o
 LEDSCAPE_LIB := libledscape.a
