@@ -139,8 +139,8 @@ int main(int argc, char **argv) {
       to_draw_idx = fill_idx;
       pthread_mutex_unlock(&lock);
 
-      // write display_interval_usec back to client
-      n = write(connfd, &display_interval_usec, sizeof(display_interval_usec));
+      // write fps back to client
+      n = write(connfd, &fps, sizeof(fps));
       if (n < 0)
         error("ERROR writing to socket");
     }
@@ -322,10 +322,10 @@ void *timing_func() {
       uint64_t now_usec = gettime();
 
       uint64_t rotation_usec = now_usec - start_rotation_time_usec;
-      fps = ((double) USEC_PER_SECOND) / rotation_usec;
       display_interval_usec = rotation_usec / 224;
       if (display_interval_usec > USEC_PER_SECOND)
         display_interval_usec = USEC_PER_SECOND;
+      fps = ((double) USEC_PER_SECOND) / (display_interval_usec * 224);
 
       start_rotation_time_usec = now_usec;
     }
