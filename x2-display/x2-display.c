@@ -45,7 +45,7 @@ bool keepalive = true;
 #define PIXEL_SIZE 4
 #define FRAME_SIZE LEDSCAPE_NUM_STRIPS * NUM_PIXELS_PER_STRIP * PIXEL_SIZE
 #define QUADRANT_WIDTH 56
-#define NUM_SLICES = QUADRANT_WIDTH * 4
+#define NUM_SLICES QUADRANT_WIDTH * 4
 #define PANEL_SIZE QUADRANT_WIDTH * FRAME_SIZE
 
 // 3 panels, one of which is being drawn in, is to be drawn in, and is being filled
@@ -84,7 +84,12 @@ int strip_map[] = {
   21, // 21
   22, // 22
   23, // 23
-}
+};
+
+#define USEC_PER_SECOND 1000000
+
+uint64_t display_interval_usec = USEC_PER_SECOND;
+double fps = 0.0;
 
 /*
  * Main (server) thread
@@ -215,8 +220,6 @@ int socket_init(int portno) {
   return listenfd;
 }
 
-#define USEC_PER_SECOND 1000000
-
 uint64_t gettime() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -234,8 +237,6 @@ void drawing_init() {
 }
 
 bool new_frame = true;
-uint64_t display_interval_usec = USEC_PER_SECOND;
-double fps = 0;
 
 void *drawing_func() {
   unsigned int frame_num = 0;
@@ -336,7 +337,7 @@ void *timing_func() {
       uint64_t now_usec = gettime();
 
       uint64_t rotation_usec = now_usec - start_rotation_time_usec;
-      fps = 1000000.0 / rotation_usec;
+      fps = ((double) USEC_PER_SECOND) / rotation_usec;
       display_interval_usec = rotation_usec / 224;
       if (display_interval_usec > USEC_PER_SECOND)
         display_interval_usec = USEC_PER_SECOND;
