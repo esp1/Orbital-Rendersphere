@@ -361,8 +361,8 @@ WORD_LOOP:
 		// Reconfigure r10-13 for clearing the bits
 		MOV r10, GPIO0 | GPIO_CLEARDATAOUT
 		MOV r11, GPIO1 | GPIO_CLEARDATAOUT
-		MOV r12, GPIO2 | GPIO_CLEARDATAOUT
-		MOV r13, GPIO3 | GPIO_CLEARDATAOUT
+//		MOV r12, GPIO2 | GPIO_CLEARDATAOUT
+//		MOV r13, GPIO3 | GPIO_CLEARDATAOUT
 
 		// wait for the length of the zero bits (250 ns)
 		WAITNS 650+250, wait_zero_time
@@ -371,8 +371,8 @@ WORD_LOOP:
 		// turn off all the zero bits
 		SBBO gpio0_zeros, r10, 0, 4
 		SBBO gpio1_zeros, r11, 0, 4
-		SBBO gpio2_zeros, r12, 0, 4
-		SBBO gpio3_zeros, r13, 0, 4
+//		SBBO gpio2_zeros, r12, 0, 4
+//		SBBO gpio3_zeros, r13, 0, 4
 
 		// Wait until the length of the one bits
 		WAITNS 650+600, wait_one_time
@@ -381,8 +381,8 @@ WORD_LOOP:
 		// Turn all the bits off
 		SBBO r20, r10, 0, 4
 		SBBO r21, r11, 0, 4
-		SBBO r22, r12, 0, 4
-		SBBO r23, r13, 0, 4
+//		SBBO r22, r12, 0, 4
+//		SBBO r23, r13, 0, 4
 
 		QBNE BIT_LOOP, bit_num, 0
 
