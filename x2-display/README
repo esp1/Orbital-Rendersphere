@@ -1,0 +1,15 @@
+To enable the PRU subsystem:
+
+cd /boot
+cp am335x-boneblack.dtb am335x-boneblack.dtb_orig
+dtc -I dtb -O dts am335x-boneblack.dtb > am335x-boneblack.dts_orig
+
+cp am335x-boneblack.dts_orig am335x-boneblack.dts_pru
+
+Edit am335x-boneblack.dts_pru: Search for pruss@4a300000 and then under it change
+status = "disabled";
+to
+status = "okay";
+
+dtc -I dts -O dtb am335x-boneblack.dts_pru > am335x-boneblack.dtb_pru
+cp am335x-boneblack.dtb_pru am335x-boneblack.dtb
