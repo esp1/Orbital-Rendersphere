@@ -2,6 +2,7 @@
 #
 # The top level targets link in the two .o files for now.
 #
+TARGETS += gpio
 TARGETS += rgb-test
 TARGETS += x2-display
 
