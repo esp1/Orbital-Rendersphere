@@ -29,7 +29,9 @@
 void error(char *msg);
 void INThandler();
 int socket_init(int portno);
+void drawing_init();
 void *drawing_func();
+void timing_init();
 void *timing_func();
 
 // globals
@@ -61,6 +63,17 @@ int main(int argc, char **argv) {
     fprintf(stderr, "usage: %s <port>\n", argv[0]);
     exit(1);
   }
+
+  // initialize panel data
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 224; j++) {
+      panels[i][j] = malloc(sizeof(ledscape_frame_t));
+    }
+  }
+
+  // initialize gpio stuff
+  drawing_init();
+  timing_init();
 
   signal(SIGINT, INThandler);
   pthread_mutex_init(&lock, NULL);
@@ -124,6 +137,13 @@ int main(int argc, char **argv) {
     
     close(connfd);
   }
+
+  // free panel data
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 224; j++) {
+      free(panels[i][j]);
+    }
+  }
 }
 
 /*
@@ -184,13 +204,17 @@ uint64_t gettime() {
  * Drawing thread
  */
 
+const unsigned int num_pixels = 17;
+ledscape_t * leds;
+
+void drawing_init() {
+  leds = ledscape_init(num_pixels);
+}
+
 bool new_frame = true;
 uint64_t display_interval_usec = USEC_PER_SECOND;
 
 void *drawing_func() {
-  const unsigned int num_pixels = 17;
-  ledscape_t * const leds = ledscape_init(num_pixels);
-  
   unsigned int frame_num = 0;
 
   while (keepalive) {
@@ -213,11 +237,11 @@ void *drawing_func() {
 
       // copy panel.frame -> frame
       ledscape_frame_t * const pframe = panels[draw_idx][slice_idx];
-      //memcpy(frame, pframe, FRAME_SIZE);
+      memcpy(frame, pframe, FRAME_SIZE);
 
       // draw frame
       ledscape_wait(leds);
-      //ledscape_draw(leds, frame_num);
+      ledscape_draw(leds, frame_num);
 
       // wait until end of frame
       uint64_t now_usec;
@@ -237,12 +261,17 @@ void *drawing_func() {
  * Timing thread
  */
 
-void *timing_func() {
-  unsigned int hall_sensor_gpio = 61;  // gpio1_29 = 32 + 29
-  
+unsigned int hall_sensor_gpio = 61;  // gpio1_29 = 32 + 29
+
+void timing_init() {
   gpio_export(hall_sensor_gpio);
   gpio_set_dir(hall_sensor_gpio, 0);
   gpio_set_edge(hall_sensor_gpio, "rising");
+}
+
+void *timing_func() {
+  printf("Listening for hall sensor on gpio %d\n", hall_sensor_gpio);
+  
   int gpio_fd = gpio_fd_open(hall_sensor_gpio);
   
   int nfds = 1;
@@ -262,7 +291,7 @@ void *timing_func() {
     
     if (fdset[0].revents & POLLPRI) {
       read(fdset[0].fd, buf, MAX_BUF);
-      printf("\npoll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
+      printf("poll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
 
       // GPIO interrupt occurred - calculate rotation timing
       new_frame = true;
