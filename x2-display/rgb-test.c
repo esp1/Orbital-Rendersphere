@@ -28,10 +28,14 @@ ledscape_fill_color(
 
 int main (void)
 {
-	const int num_pixels = 128;
+	const int num_pixels = 17;
 	ledscape_t * const leds = ledscape_init(num_pixels);
 	time_t last_time = time(NULL);
 	unsigned last_i = 0;
+
+	struct timespec tim, tim2;
+	tim.tv_sec = 0;
+	tim.tv_nsec = 50*1000*1000;
 
 	unsigned i = 0;
 	while (1)
@@ -69,6 +73,9 @@ int main (void)
 				ledscape_set_color(frame, strip, 3*p+2, 0, 0, p+val + 160);
 			}
 		}
+
+		// do some work
+		//nanosleep(&tim, &tim2);
 
 		// wait for the previous frame to finish;
 		const uint32_t response = ledscape_wait(leds);
