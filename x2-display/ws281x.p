@@ -305,7 +305,7 @@ WORD_LOOP:
 		TEST_BIT(r25, gpio0, bit15)
 
 		// Load 10 registers of data, starting at r10
-		LBBO r10, r0, 64, 9*4
+		LBBO r10, r0, 64, 8*4
 		MOV gpio1_zeros, 0
 		TEST_BIT(r10, gpio1, bit0)
 		TEST_BIT(r11, gpio1, bit1)
@@ -315,23 +315,23 @@ WORD_LOOP:
 		TEST_BIT(r15, gpio1, bit5)
 		TEST_BIT(r16, gpio1, bit6)
 		TEST_BIT(r17, gpio1, bit7)
-		TEST_BIT(r18, gpio1, bit8)
-		TEST_BIT(r19, gpio1, bit9)
+//		TEST_BIT(r18, gpio1, bit8)
+//		TEST_BIT(r19, gpio1, bit9)
 
 		// Load 5 registers of data, starting at r10
-		LBBO r10, r0, 100, 5*4
-		MOV gpio2_zeros, 0
-		TEST_BIT(r10, gpio2, bit0)
-		TEST_BIT(r11, gpio2, bit1)
-		TEST_BIT(r12, gpio2, bit2)
-		TEST_BIT(r13, gpio2, bit3)
-		TEST_BIT(r14, gpio2, bit4)
+//		LBBO r10, r0, 100, 5*4
+//		MOV gpio2_zeros, 0
+//		TEST_BIT(r10, gpio2, bit0)
+//		TEST_BIT(r11, gpio2, bit1)
+//		TEST_BIT(r12, gpio2, bit2)
+//		TEST_BIT(r13, gpio2, bit3)
+//		TEST_BIT(r14, gpio2, bit4)
 
 		// Load 2 registers of data, starting at r10
-		LBBO r10, r0, 120, 2*4
-		MOV gpio3_zeros, 0
-		TEST_BIT(r10, gpio3, bit0)
-		TEST_BIT(r11, gpio3, bit1)
+//		LBBO r10, r0, 120, 2*4
+//		MOV gpio3_zeros, 0
+//		TEST_BIT(r10, gpio3, bit0)
+//		TEST_BIT(r11, gpio3, bit1)
 
 		// Now that we have read all of the data,
 		// we can reuse the registers for the set/clear addresses
@@ -355,8 +355,8 @@ WORD_LOOP:
 		// Send all the start bits
 		SBBO r20, r10, 0, 4
 		SBBO r21, r11, 0, 4
-		SBBO r23, r13, 0, 4
 		SBBO r22, r12, 0, 4
+		SBBO r23, r13, 0, 4
 
 		// Reconfigure r10-13 for clearing the bits
 		MOV r10, GPIO0 | GPIO_CLEARDATAOUT
@@ -381,14 +381,14 @@ WORD_LOOP:
 		// Turn all the bits off
 		SBBO r20, r10, 0, 4
 		SBBO r21, r11, 0, 4
-		SBBO r23, r13, 0, 4
 		SBBO r22, r12, 0, 4
+		SBBO r23, r13, 0, 4
 
 		QBNE BIT_LOOP, bit_num, 0
 
 	// The 32 RGB streams have been clocked out
 	// Move to the next pixel on each row
-	ADD data_addr, data_addr, 32 * 4
+	ADD data_addr, data_addr, 24 * 4
 	SUB data_len, data_len, 1
 	QBNE WORD_LOOP, data_len, #0
 
