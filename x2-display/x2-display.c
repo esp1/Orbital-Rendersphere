@@ -63,7 +63,7 @@ int fill_idx;
 
 #define USEC_PER_SECOND 1000000
 
-uint64_t display_interval_usec = USEC_PER_SECOND * 224;
+uint64_t display_interval_usec = USEC_PER_SECOND;
 double fps = 0.0;
 
 /*
@@ -223,12 +223,14 @@ void *drawing_func() {
     pthread_mutex_unlock(&lock);
 
     new_frame = false;
+    uint64_t start_usec = gettime();
     for (unsigned int slice_idx = 0; slice_idx < NUM_SLICES; slice_idx++) {
       if (new_frame) {
         break;
       }
 
-      uint64_t end_time_usec = (slice_idx + 1) * display_interval_usec;
+      uint64_t end_time_usec = start_usec + ((slice_idx + 1) * display_interval_usec);
+      printf("now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", start_usec, end_time_usec, end_time_usec - start_usec);
 
       // alternate frame buffers on each draw command
       frame_num = (frame_num + 1) % 2;
@@ -258,7 +260,7 @@ void *drawing_func() {
       ledscape_draw(leds, frame_num);
 
       // wait until end of frame
-      uint64_t now_usec;
+      uint64_t now_usec = gettime();
       while (now_usec < end_time_usec && !new_frame) {
         now_usec = gettime();
       }
