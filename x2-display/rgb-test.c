@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "ledscape.h"
+#include "strip_map.h"
 
 static void
 ledscape_fill_color(
@@ -24,7 +25,6 @@ ledscape_fill_color(
 		for (unsigned strip = 0 ; strip < LEDSCAPE_NUM_STRIPS ; strip++)
 			ledscape_set_color(frame, strip, i, r, g, b);
 }
-
 
 int main (void)
 {
@@ -50,14 +50,15 @@ int main (void)
 
 		for (unsigned strip_idx = 0 ; strip_idx < LEDSCAPE_NUM_STRIPS ; strip_idx++)
 		{
-/*
 			for (unsigned pixel_idx = 0; pixel_idx <= strip_idx % 10; pixel_idx++) {
 				uint8_t r = ((strip_idx / 10) == 0) ? 100 : 0;
 				uint8_t g = ((strip_idx / 10) == 1) ? 100 : 0;
 				uint8_t b = ((strip_idx / 10) == 2) ? 100 : 0;
-				ledscape_set_color(frame, strip_idx, pixel_idx, r, g, b);
+				int strip = strip_map[strip_idx];
+				if (strip >= 0)
+					ledscape_set_color(frame, strip, pixel_idx, r, g, b);
 			}
-*/
+/*
 			for (unsigned pixel_idx = 0 ; pixel_idx < num_pixels ; pixel_idx++)
 			{
 				ledscape_set_color(
@@ -77,8 +78,8 @@ int main (void)
 				ledscape_set_color(frame, strip_idx, 3*pixel_idx+1, 0, pixel_idx+val + 80, 0);
 				ledscape_set_color(frame, strip_idx, 3*pixel_idx+2, 0, 0, pixel_idx+val + 160);
 			}
+*/
 		}
-
 		// do some work
 		//nanosleep(&tim, &tim2);
 

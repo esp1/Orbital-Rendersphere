@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include "gpio.h"
 #include "ledscape.h"
+#include "strip_map.h"
 
 // function prototypes
 void error(char *msg);
@@ -59,32 +60,6 @@ int draw_idx = 0;
 int to_draw_idx = 0;
 int fill_idx;
 
-int strip_map[] = {
-  0, // 0
-  1, // 1
-  2, // 2
-  3, // 3
-  4, // 4
-  5, // 5
-  6, // 6
-  7, // 7
-  8, // 8
-  9, // 9
-  10, // 10
-  11, // 11
-  12, // 12
-  13, // 13
-  14, // 14
-  15, // 15
-  16, // 16
-  17, // 17
-  18, // 18
-  19, // 19
-  20, // 20
-  21, // 21
-  22, // 22
-  23, // 23
-};
 
 #define USEC_PER_SECOND 1000000
 
