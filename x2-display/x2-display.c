@@ -37,6 +37,9 @@ void timing_init();
 void *timing_func();
 
 // globals
+
+#define DEFAULT_PORT 10000
+
 pthread_mutex_t lock;
 bool keepalive = true;
 
@@ -71,8 +74,14 @@ double fps = 0.0;
  * Main (server) thread
  */
 int main(int argc, char **argv) {
+  int port = DEFAULT_PORT;
+
   // check command line args
-  if (argc != 2) {
+  if (argc == 1) {
+    port = DEFAULT_PORT;
+  } else if (argc == 2) {
+    port = atoi(argv[1]);
+  } else {
     fprintf(stderr, "usage: %s <port>\n", argv[0]);
     exit(1);
   }
@@ -93,7 +102,8 @@ int main(int argc, char **argv) {
   pthread_create(&drawing_thread, NULL, drawing_func, NULL);
 
   // main server thread
-  int listenfd = socket_init(atoi(argv[1]));
+  printf("Server listening on port %d\n", port);
+  int listenfd = socket_init(port);
 
   struct sockaddr_in clientaddr;
   socklen_t clientlen = sizeof(clientaddr);
