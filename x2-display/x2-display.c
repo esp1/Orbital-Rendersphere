@@ -225,12 +225,12 @@ void *drawing_func() {
     new_frame = false;
     uint64_t start_usec = gettime();
     for (unsigned int slice_idx = 0; slice_idx < NUM_SLICES; slice_idx++) {
-      if (new_frame) {
+      if (new_frame || !keepalive) {
         break;
       }
 
       uint64_t end_time_usec = start_usec + ((slice_idx + 1) * display_interval_usec);
-      printf("now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", start_usec, end_time_usec, end_time_usec - start_usec);
+      printf("%d now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", slice_idx, start_usec, end_time_usec, end_time_usec - start_usec);
 
       // alternate frame buffers on each draw command
       frame_num = (frame_num + 1) % 2;
