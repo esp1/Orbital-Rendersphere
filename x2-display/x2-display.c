@@ -62,8 +62,9 @@ int fill_idx;
 
 
 #define USEC_PER_SECOND 1000000
+#define MAX_DISPLAY_INTERVAL_USEC USEC_PER_SECOND / 10
 
-uint64_t display_interval_usec = USEC_PER_SECOND;
+uint64_t display_interval_usec = MAX_DISPLAY_INTERVAL_USEC;
 double fps = 0.0;
 
 /*
@@ -247,9 +248,9 @@ void *drawing_func() {
 
           unsigned int y = y_offset + (row < 3 ? pixel_idx : NUM_PIXELS_PER_STRIP - 1 - pixel_idx);  // invert pixel_idx for lower hemisphere
           unsigned int x = (slice_idx % QUADRANT_WIDTH);
-          uint8_t r = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 0];
-          uint8_t g = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 1];
-          uint8_t b = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 2];
+          uint8_t r = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 1];
+          uint8_t g = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 2];
+          uint8_t b = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 3];
 
           ledscape_set_color(frame, strip_map[strip], pixel_idx, r, g, b);
         }
@@ -323,8 +324,8 @@ void *timing_func() {
 
       uint64_t rotation_usec = now_usec - start_rotation_time_usec;
       display_interval_usec = rotation_usec / 224;
-      if (display_interval_usec > USEC_PER_SECOND)
-        display_interval_usec = USEC_PER_SECOND;
+      if (display_interval_usec > MAX_DISPLAY_INTERVAL_USEC)
+        display_interval_usec = MAX_DISPLAY_INTERVAL_USEC;
       fps = ((double) USEC_PER_SECOND) / (display_interval_usec * 224);
 
       start_rotation_time_usec = now_usec;
