@@ -14,7 +14,7 @@ char panels[3][PANEL_SIZE];
 int draw_idx = 0;
 int to_draw_idx = 0;
 int fill_idx;
-uint32_t fps = 0;
+double fps = 0.0;
 
 
 ledscape_t * leds;

@@ -157,28 +157,28 @@ void *server_func(int port) {
         pthread_mutex_unlock(&lock);
 
         // write stats back to client
-        write_stats(connfd);
+//        write_stats(connfd);
       } else if (command == '?') {
         // write stats back to client
         write_stats(connfd);
       } else if (command == 'x') {
         // x offset
         uint32_t value = set_x_offset(read_uint32(connfd));
-	n = write(connfd, &value, sizeof(value));
-	if (n < 0)
-	  error("ERROR writing x offset value to socket");
+//	n = write(connfd, &value, sizeof(value));
+//	if (n < 0)
+//	  error("ERROR writing x offset value to socket");
       } else if (command == 'b') {
         // read brightness
         float value = set_brightness(read_float(connfd));
-	n = write(connfd, &value, sizeof(value));
-	if (n < 0)
-	  error("ERROR writing brightness value to socket");
+//	n = write(connfd, &value, sizeof(value));
+//	if (n < 0)
+//	  error("ERROR writing brightness value to socket");
       } else if (command == 'c') {
         // read contrast
         float value = set_contrast(read_float(connfd));
-	n = write(connfd, &value, sizeof(value));
-	if (n < 0)
-	  error("ERROR writing contrast value to socket");
+//	n = write(connfd, &value, sizeof(value));
+//	if (n < 0)
+//	  error("ERROR writing contrast value to socket");
       }
 
       close(connfd);
