@@ -63,7 +63,7 @@ int fill_idx;
 
 #define USEC_PER_SECOND 1000000
 
-uint64_t display_interval_usec = USEC_PER_SECOND;
+uint64_t display_interval_usec = USEC_PER_SECOND * 224;
 double fps = 0.0;
 
 /*
@@ -264,6 +264,14 @@ void *drawing_func() {
       }
     }
   }
+  
+  // blank all strips
+  ledscape_frame_t * const frame = ledscape_frame(leds, frame_num);
+  for (unsigned int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++)
+    for (unsigned int pixel_idx = 0; pixel_idx < NUM_PIXELS_PER_STRIP; pixel_idx++)
+      ledscape_set_color(frame, strip_idx, pixel_idx, 0, 0, 0);
+  ledscape_wait(leds);
+  ledscape_draw(leds, frame_num);
 
   ledscape_close(leds);
 
