@@ -121,23 +121,22 @@
 |(1<<gpio1_bit5)\
 |(1<<gpio1_bit6)\
 |(1<<gpio1_bit7)\
+|(1<<gpio1_bit8)\
+|(1<<gpio1_bit9)\
 )
-//|(1<<gpio1_bit8)\
-//|(1<<gpio1_bit9)\
-//)
 
-//#define GPIO2_LED_MASK (0\
-//|(1<<gpio2_bit0)\
-//|(1<<gpio2_bit1)\
-//|(1<<gpio2_bit2)\
-//|(1<<gpio2_bit3)\
-//|(1<<gpio2_bit4)\
-//)
+#define GPIO2_LED_MASK (0\
+|(1<<gpio2_bit0)\
+|(1<<gpio2_bit1)\
+|(1<<gpio2_bit2)\
+|(1<<gpio2_bit3)\
+|(1<<gpio2_bit4)\
+)
 
-//#define GPIO3_LED_MASK (0\
-//|(1<<gpio3_bit0)\
-//|(1<<gpio3_bit1)\
-//)
+#define GPIO3_LED_MASK (0\
+|(1<<gpio3_bit0)\
+|(1<<gpio3_bit1)\
+)
 
 .origin 0
 .entrypoint START
@@ -147,8 +146,8 @@
 /** Mappings of the GPIO devices */
 #define GPIO0 0x44E07000
 #define GPIO1 0x4804c000
-//#define GPIO2 0x481AC000
-//#define GPIO3 0x481AE000
+#define GPIO2 0x481AC000
+#define GPIO3 0x481AE000
 
 /** Offsets for the clear and set registers in the devices */
 #define GPIO_CLEARDATAOUT 0x190
@@ -339,13 +338,13 @@ WORD_LOOP:
 		// and the masks of which pins are mapped to which LEDs.
 		MOV r10, GPIO0 | GPIO_SETDATAOUT
 		MOV r11, GPIO1 | GPIO_SETDATAOUT
-//		MOV r12, GPIO2 | GPIO_SETDATAOUT
-//		MOV r13, GPIO3 | GPIO_SETDATAOUT
+		MOV r12, GPIO2 | GPIO_SETDATAOUT
+		MOV r13, GPIO3 | GPIO_SETDATAOUT
 
 		MOV r20, GPIO0_LED_MASK
 		MOV r21, GPIO1_LED_MASK
-//		MOV r22, GPIO2_LED_MASK
-//		MOV r23, GPIO3_LED_MASK
+		MOV r22, GPIO2_LED_MASK
+		MOV r23, GPIO3_LED_MASK
 
 		// Wait for 650 ns to have passed
 		// \todo: Move some of the other work to the other
@@ -356,8 +355,8 @@ WORD_LOOP:
 		// Send all the start bits
 		SBBO r20, r10, 0, 4
 		SBBO r21, r11, 0, 4
-//		SBBO r22, r12, 0, 4
-//		SBBO r23, r13, 0, 4
+		SBBO r22, r12, 0, 4
+		SBBO r23, r13, 0, 4
 
 		// Reconfigure r10-13 for clearing the bits
 		MOV r10, GPIO0 | GPIO_CLEARDATAOUT
@@ -372,8 +371,8 @@ WORD_LOOP:
 		// turn off all the zero bits
 		SBBO gpio0_zeros, r10, 0, 4
 		SBBO gpio1_zeros, r11, 0, 4
-		SBBO gpio2_zeros, r12, 0, 4
-		SBBO gpio3_zeros, r13, 0, 4
+//		SBBO gpio2_zeros, r12, 0, 4
+//		SBBO gpio3_zeros, r13, 0, 4
 
 		// Wait until the length of the one bits
 		WAITNS 650+600, wait_one_time
