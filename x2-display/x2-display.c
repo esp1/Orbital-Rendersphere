@@ -7,6 +7,7 @@
  */
 
 #include <arpa/inet.h>
+#include <inttypes.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
@@ -69,8 +70,8 @@ int main(int argc, char **argv) {
   pthread_create(&timing_thread, NULL, timing_func, NULL);
 
   // start draw thread
-  pthread_t draw_thread;
-  pthread_create(&draw_thread, NULL, draw_func, NULL);
+  pthread_t drawing_thread;
+  //pthread_create(&drawing_thread, NULL, drawing_func, NULL);
 
   // main server thread
   int listenfd = socket_init(atoi(argv[1]));
@@ -134,6 +135,7 @@ void error(char *msg) {
 }
 
 void INThandler() {
+  printf("Interrupt!\n");
   keepalive = false;
 }
 
@@ -160,8 +162,7 @@ int socket_init(int portno) {
   serveraddr.sin_port = htons((unsigned short)portno); // port to listen on
 
   // bind: associate the listening socket with a port
-  if (bind(listenfd, (struct sockaddr *) &serveraddr, 
-	   sizeof(serveraddr)) < 0) 
+  if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0) 
     error("ERROR on binding");
 
   // listen: make it a listening socket ready to accept connection requests
@@ -186,7 +187,7 @@ uint64_t gettime() {
 bool new_frame = true;
 uint64_t display_interval_usec = USEC_PER_SECOND;
 
-void *draw_func() {
+void *drawing_func() {
   const unsigned int num_pixels = 17;
   ledscape_t * const leds = ledscape_init(num_pixels);
   
@@ -228,6 +229,7 @@ void *draw_func() {
 
   ledscape_close(leds);
 
+  printf("Exiting drawing thread\n");
   return NULL;
 }
 
@@ -246,6 +248,7 @@ void *timing_func() {
   int nfds = 1;
   struct pollfd fdset[nfds];
   int timeout = 3 * 1000;  /* 3 seconds */
+  char *buf[MAX_BUF];
   
   uint64_t start_rotation_time_usec = 0;
 
@@ -255,12 +258,11 @@ void *timing_func() {
     fdset[0].events = POLLPRI;
     
     // blocking read of gpio pin for hall effect sensor
-    //int rc = 
     poll(fdset, nfds, timeout);
     
     if (fdset[0].revents & POLLPRI) {
-      //len = read(fdset[0].fd, buf, MAX_BUF);
-      //printf("\npoll() GPIO %d interrupt occurred\n", hall_sensor_gpio);
+      read(fdset[0].fd, buf, MAX_BUF);
+      printf("\npoll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
 
       // GPIO interrupt occurred - calculate rotation timing
       new_frame = true;
@@ -276,5 +278,6 @@ void *timing_func() {
   
   gpio_fd_close(gpio_fd);
  
+  printf("Exiting timing thread\n");
   return NULL;
 }
