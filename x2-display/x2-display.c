@@ -29,7 +29,7 @@
 void error(char *msg);
 void INThandler();
 int socket_init(int portno);
-void *draw_func();
+void *drawing_func();
 void *timing_func();
 
 // globals
@@ -69,9 +69,9 @@ int main(int argc, char **argv) {
   pthread_t timing_thread;
   pthread_create(&timing_thread, NULL, timing_func, NULL);
 
-  // start draw thread
+  // start drawing thread
   pthread_t drawing_thread;
-  //pthread_create(&drawing_thread, NULL, drawing_func, NULL);
+  pthread_create(&drawing_thread, NULL, drawing_func, NULL);
 
   // main server thread
   int listenfd = socket_init(atoi(argv[1]));
@@ -181,7 +181,7 @@ uint64_t gettime() {
 }
 
 /*
- * Draw thread
+ * Drawing thread
  */
 
 bool new_frame = true;
@@ -213,11 +213,11 @@ void *drawing_func() {
 
       // copy panel.frame -> frame
       ledscape_frame_t * const pframe = panels[draw_idx][slice_idx];
-      memcpy(frame, pframe, FRAME_SIZE);
+      //memcpy(frame, pframe, FRAME_SIZE);
 
       // draw frame
       ledscape_wait(leds);
-      ledscape_draw(leds, frame_num);
+      //ledscape_draw(leds, frame_num);
 
       // wait until end of frame
       uint64_t now_usec;
@@ -238,7 +238,7 @@ void *drawing_func() {
  */
 
 void *timing_func() {
-  unsigned int hall_sensor_gpio = 30;
+  unsigned int hall_sensor_gpio = 61;  // gpio1_29 = 32 + 29
   
   gpio_export(hall_sensor_gpio);
   gpio_set_dir(hall_sensor_gpio, 0);
@@ -247,7 +247,7 @@ void *timing_func() {
   
   int nfds = 1;
   struct pollfd fdset[nfds];
-  int timeout = 3 * 1000;  /* 3 seconds */
+  int timeout = 3 * 1000;  // 3 seconds
   char *buf[MAX_BUF];
   
   uint64_t start_rotation_time_usec = 0;
