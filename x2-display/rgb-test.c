@@ -46,13 +46,17 @@ int main (void)
 			= ledscape_frame(leds, frame_num);
 
 		uint8_t val = i >> 1;
-		uint16_t r = ((i >>  0) & 0xFF);
-		uint16_t g = ((i >>  8) & 0xFF);
-		uint16_t b = ((i >> 16) & 0xFF);
 		ledscape_fill_color(frame, num_pixels, 0, 0, 0);
 
-		for (unsigned strip = 0 ; strip < 1 ; strip++)
+		for (unsigned strip_idx = 0 ; strip_idx < LEDSCAPE_NUM_STRIPS ; strip_idx++)
 		{
+			for (unsigned pixel_idx = 0; pixel_idx <= strip_idx % 10; pixel_idx++) {
+				uint8_t r = ((strip_idx / 10) == 0) ? 100 : 0;
+				uint8_t g = ((strip_idx / 10) == 1) ? 100 : 0;
+				uint8_t b = ((strip_idx / 10) == 2) ? 100 : 0;
+				ledscape_set_color(frame, strip_idx, pixel_idx, r, g, b);
+			}
+/*
 			for (unsigned p = 0 ; p < 1 ; p++)
 			{
 				ledscape_set_color(
@@ -72,6 +76,7 @@ int main (void)
 				ledscape_set_color(frame, strip, 3*p+1, 0, p+val + 80, 0);
 				ledscape_set_color(frame, strip, 3*p+2, 0, 0, p+val + 160);
 			}
+*/
 		}
 
 		// do some work
