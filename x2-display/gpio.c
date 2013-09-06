@@ -216,6 +216,7 @@ int gpio_fd_close(int fd)
 /****************************************************************
  * Main
  ****************************************************************/
+/*
 int main(int argc, char **argv, char **envp)
 {
 	struct pollfd fdset[2];
@@ -278,4 +279,4 @@ int main(int argc, char **argv, char **envp)
 	gpio_fd_close(gpio_fd);
 	return 0;
 }
-
+*/

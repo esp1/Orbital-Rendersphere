@@ -2,11 +2,10 @@
 #
 # The top level targets link in the two .o files for now.
 #
-TARGETS += gpio
 TARGETS += rgb-test
 TARGETS += x2-display
 
-LEDSCAPE_OBJS = ledscape.o pru.o bitslice.o util.o
+LEDSCAPE_OBJS = ledscape.o pru.o bitslice.o util.o gpio.o
 LEDSCAPE_LIB := libledscape.a
 
 all: $(TARGETS) ws281x.bin

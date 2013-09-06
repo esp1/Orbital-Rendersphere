@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -20,6 +21,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include "gpio.h"
 #include "ledscape.h"
 
 // function prototypes
@@ -49,6 +51,9 @@ int draw_idx = 0;
 int to_draw_idx = 0;
 int fill_idx;
 
+/*
+ * Main (server) thread
+ */
 int main(int argc, char **argv) {
   // check command line args
   if (argc != 2) {
@@ -174,6 +179,10 @@ uint64_t gettime() {
   return (tv.tv_sec * USEC_PER_SECOND) + tv.tv_usec;
 }
 
+/*
+ * Draw thread
+ */
+
 bool new_frame = true;
 uint64_t display_interval_usec = USEC_PER_SECOND;
 
@@ -222,20 +231,50 @@ void *draw_func() {
   return NULL;
 }
 
+/*
+ * Timing thread
+ */
+
 void *timing_func() {
+  unsigned int hall_sensor_gpio = 30;
+  
+  gpio_export(hall_sensor_gpio);
+  gpio_set_dir(hall_sensor_gpio, 0);
+  gpio_set_edge(hall_sensor_gpio, "rising");
+  int gpio_fd = gpio_fd_open(hall_sensor_gpio);
+  
+  int nfds = 1;
+  struct pollfd fdset[nfds];
+  int timeout = 3 * 1000;  /* 3 seconds */
+  
   uint64_t start_rotation_time_usec = 0;
+
   while (keepalive) {
+    memset((void*)fdset, 0, sizeof(fdset));
+    fdset[0].fd = gpio_fd;
+    fdset[0].events = POLLPRI;
+    
     // blocking read of gpio pin for hall effect sensor
+    //int rc = 
+    poll(fdset, nfds, timeout);
+    
+    if (fdset[0].revents & POLLPRI) {
+      //len = read(fdset[0].fd, buf, MAX_BUF);
+      //printf("\npoll() GPIO %d interrupt occurred\n", hall_sensor_gpio);
 
-    new_frame = true;
-    uint64_t now_usec = gettime();
-
-    display_interval_usec = (now_usec - start_rotation_time_usec) / 224;
-    if (display_interval_usec > USEC_PER_SECOND)
-      display_interval_usec = USEC_PER_SECOND;
-
-    start_rotation_time_usec = now_usec;
+      // GPIO interrupt occurred - calculate rotation timing
+      new_frame = true;
+      uint64_t now_usec = gettime();
+      
+      display_interval_usec = (now_usec - start_rotation_time_usec) / 224;
+      if (display_interval_usec > USEC_PER_SECOND)
+	display_interval_usec = USEC_PER_SECOND;
+      
+      start_rotation_time_usec = now_usec;
+    }
   }
-
+  
+  gpio_fd_close(gpio_fd);
+ 
   return NULL;
 }
