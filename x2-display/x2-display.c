@@ -1,4 +1,4 @@
-/* 
+/*
  * The X2 display server for the Orbital Rendersphere.
  * Listens on a specified port for image data, and displays that data to the
  * Orbital Rendersphere POV display.
@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,9 +40,13 @@ pthread_mutex_t lock;
 bool keepalive = true;
 
 #define BUFSIZE 1024
+
+#define NUM_PIXELS_PER_STRIP 17
 #define PIXEL_SIZE 4
-#define FRAME_SIZE 17 * 24 * PIXEL_SIZE
-#define PANEL_SIZE 56 * FRAME_SIZE
+#define FRAME_SIZE LEDSCAPE_NUM_STRIPS * NUM_PIXELS_PER_STRIP * PIXEL_SIZE
+#define QUADRANT_WIDTH 56
+#define NUM_SLICES = QUADRANT_WIDTH * 4
+#define PANEL_SIZE QUADRANT_WIDTH * FRAME_SIZE
 
 // 3 panels, one of which is being drawn in, is to be drawn in, and is being filled
 // each panel consists of 224 slices, where each slice is a horizontal line of resolution
@@ -49,10 +54,37 @@ bool keepalive = true;
 // each pixel takes up 4 bytes of information, stored as BRGA (but A is not used)
 // each frame encompasses 4 slices
 
-ledscape_frame_t * panels[3][224];
+char panels[3][PANEL_SIZE];
 int draw_idx = 0;
 int to_draw_idx = 0;
 int fill_idx;
+
+int strip_map[] = {
+  0, // 0
+  1, // 1
+  2, // 2
+  3, // 3
+  4, // 4
+  5, // 5
+  6, // 6
+  7, // 7
+  8, // 8
+  9, // 9
+  10, // 10
+  11, // 11
+  12, // 12
+  13, // 13
+  14, // 14
+  15, // 15
+  16, // 16
+  17, // 17
+  18, // 18
+  19, // 19
+  20, // 20
+  21, // 21
+  22, // 22
+  23, // 23
+}
 
 /*
  * Main (server) thread
@@ -62,13 +94,6 @@ int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "usage: %s <port>\n", argv[0]);
     exit(1);
-  }
-
-  // initialize panel data
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 224; j++) {
-      panels[i][j] = malloc(sizeof(ledscape_frame_t));
-    }
   }
 
   // initialize gpio stuff
@@ -98,51 +123,49 @@ int main(int argc, char **argv) {
     if (connfd < 0)
       error("ERROR on accept");
 
-    // read panel data length
-    unsigned int datalen = 0;
-    char buf[4];
-    int n = read(connfd, buf, 4);
-    if (n < 0) error("ERROR reading from socket");
-    datalen = (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3];
-    printf("length = %d bytes\n", datalen);
-    if (datalen > PANEL_SIZE)
-      error("data too long!");
-    else if (datalen == 0)
-      break;
-    
-    // determine fill index
-    pthread_mutex_lock(&lock);
-    if (draw_idx == 0 || to_draw_idx == 0)
-      if (draw_idx == 1 || to_draw_idx == 1)
-	fill_idx = 2;
-      else
-	fill_idx = 1;
-    else
-      fill_idx = 0;
-    pthread_mutex_unlock(&lock);
-
-    // read panel data from the client
-    bzero(panels[fill_idx], PANEL_SIZE);
-    unsigned int offset = 0;
-    while (offset < datalen) {
-      n = read(connfd, panels[fill_idx] + offset, BUFSIZE);
+    // read header command
+    char header;
+    read(connfd, &header, 1);
+    if (header == '0') {
+      // read panel data length
+      char buf[4];
+      int n = read(connfd, buf, 4);
       if (n < 0) error("ERROR reading from socket");
-      offset += n;
+      uint32_t datalen = (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3];
+      printf("length = %d\n", datalen);
+
+      // determine fill index
+      pthread_mutex_lock(&lock);
+      if (draw_idx == 0 || to_draw_idx == 0)
+        if (draw_idx == 1 || to_draw_idx == 1)
+          fill_idx = 2;
+        else
+          fill_idx = 1;
+      else
+        fill_idx = 0;
+      pthread_mutex_unlock(&lock);
+
+      // read panel data from the client
+      bzero(panels[fill_idx], PANEL_SIZE);
+      unsigned int offset = 0;
+      while (offset < datalen * 4) {
+        n = read(connfd, panels[fill_idx] + offset, BUFSIZE);
+        if (n < 0) error("ERROR reading from socket");
+        offset += n;
+      }
+
+      // set to-draw index
+      pthread_mutex_lock(&lock);
+      to_draw_idx = fill_idx;
+      pthread_mutex_unlock(&lock);
+
+      // write display_interval_usec back to client
+      n = write(connfd, &display_interval_usec, sizeof(display_interval_usec));
+      if (n < 0)
+        error("ERROR writing to socket");
     }
 
-    // set to-draw index
-    pthread_mutex_lock(&lock);
-    to_draw_idx = fill_idx;
-    pthread_mutex_unlock(&lock);
-    
     close(connfd);
-  }
-
-  // free panel data
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 224; j++) {
-      free(panels[i][j]);
-    }
   }
 }
 
@@ -161,17 +184,17 @@ void INThandler() {
 
 int socket_init(int portno) {
   int listenfd = socket(AF_INET, SOCK_STREAM, 0); // listening socket
-  if (listenfd < 0) 
+  if (listenfd < 0)
     error("ERROR opening socket");
 
   /*
-   * setsockopt: Handy debugging trick that lets 
-   * us rerun the server immediately after we kill it; 
-   * otherwise we have to wait about 20 secs. 
-   * Eliminates "ERROR on binding: Address already in use" error. 
+   * setsockopt: Handy debugging trick that lets
+   * us rerun the server immediately after we kill it;
+   * otherwise we have to wait about 20 secs.
+   * Eliminates "ERROR on binding: Address already in use" error.
    */
   int optval = 1; // flag value for setsockopt
-  setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, 
+  setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,
 	     (const void *)&optval , sizeof(int));
 
   // build the server's internet address
@@ -182,7 +205,7 @@ int socket_init(int portno) {
   serveraddr.sin_port = htons((unsigned short)portno); // port to listen on
 
   // bind: associate the listening socket with a port
-  if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0) 
+  if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
     error("ERROR on binding");
 
   // listen: make it a listening socket ready to accept connection requests
@@ -204,15 +227,15 @@ uint64_t gettime() {
  * Drawing thread
  */
 
-const unsigned int num_pixels = 17;
 ledscape_t * leds;
 
 void drawing_init() {
-  leds = ledscape_init(num_pixels);
+  leds = ledscape_init(NUM_PIXELS_PER_STRIP);
 }
 
 bool new_frame = true;
 uint64_t display_interval_usec = USEC_PER_SECOND;
+double fps = 0;
 
 void *drawing_func() {
   unsigned int frame_num = 0;
@@ -224,7 +247,7 @@ void *drawing_func() {
     pthread_mutex_unlock(&lock);
 
     new_frame = false;
-    for (unsigned int slice_idx = 0; slice_idx < 224; slice_idx++) {
+    for (unsigned int slice_idx = 0; slice_idx < NUM_SLICES; slice_idx++) {
       if (new_frame) {
         break;
       }
@@ -236,8 +259,23 @@ void *drawing_func() {
       ledscape_frame_t * const frame = ledscape_frame(leds, frame_num);
 
       // copy panel.frame -> frame
-      ledscape_frame_t * const pframe = panels[draw_idx][slice_idx];
-      memcpy(frame, pframe, FRAME_SIZE);
+      unsigned int quadrant = slice_idx / QUADRANT_WIDTH;  // range: 0-3
+      for (unsigned int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++) {
+        unsigned int row = strip_idx / 4;  // range: 0-6
+        unsigned int y_offset = row * NUM_PIXELS_PER_STRIP;
+        for (unsigned int pixel_idx = 0; pixel_idx < NUM_PIXELS_PER_STRIP; pixel_idx++) {
+          unsigned int strip = (row * 4) +  // baseline offset for row
+                               ((strip_idx + quadrant) % 4);  // index in row
+
+          unsigned int y = y_offset + (row < 3 ? pixel_idx : NUM_PIXELS_PER_STRIP - 1 - pixel_idx);  // invert pixel_idx for lower hemisphere
+          unsigned int x = (slice_idx % QUADRANT_WIDTH);
+          uint8_t r = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 0];
+          uint8_t g = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 1];
+          uint8_t b = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 2];
+
+          ledscape_set_color(frame, strip_map[strip], pixel_idx, r, g, b);
+        }
+      }
 
       // draw frame
       ledscape_wait(leds);
@@ -246,7 +284,7 @@ void *drawing_func() {
       // wait until end of frame
       uint64_t now_usec;
       while (now_usec < end_time_usec && !new_frame) {
-	now_usec = gettime();
+        now_usec = gettime();
       }
     }
   }
@@ -271,24 +309,24 @@ void timing_init() {
 
 void *timing_func() {
   printf("Listening for hall sensor on gpio %d\n", hall_sensor_gpio);
-  
+
   int gpio_fd = gpio_fd_open(hall_sensor_gpio);
-  
+
   int nfds = 1;
   struct pollfd fdset[nfds];
   int timeout = 3 * 1000;  // 3 seconds
   char *buf[MAX_BUF];
-  
+
   uint64_t start_rotation_time_usec = 0;
 
   while (keepalive) {
     memset((void*)fdset, 0, sizeof(fdset));
     fdset[0].fd = gpio_fd;
     fdset[0].events = POLLPRI;
-    
+
     // blocking read of gpio pin for hall effect sensor
     poll(fdset, nfds, timeout);
-    
+
     if (fdset[0].revents & POLLPRI) {
       read(fdset[0].fd, buf, MAX_BUF);
       printf("poll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
@@ -296,17 +334,19 @@ void *timing_func() {
       // GPIO interrupt occurred - calculate rotation timing
       new_frame = true;
       uint64_t now_usec = gettime();
-      
-      display_interval_usec = (now_usec - start_rotation_time_usec) / 224;
+
+      uint64_t rotation_usec = now_usec - start_rotation_time_usec;
+      fps = 1000000.0 / rotation_usec;
+      display_interval_usec = rotation_usec / 224;
       if (display_interval_usec > USEC_PER_SECOND)
-	display_interval_usec = USEC_PER_SECOND;
-      
+        display_interval_usec = USEC_PER_SECOND;
+
       start_rotation_time_usec = now_usec;
     }
   }
-  
+
   gpio_fd_close(gpio_fd);
- 
+
   printf("Exiting timing thread\n");
   return NULL;
 }
