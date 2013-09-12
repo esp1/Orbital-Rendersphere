@@ -43,7 +43,7 @@
 int gpio_export(unsigned int gpio)
 {
 	int fd, len;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
  
 	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
 	if (fd < 0) {
@@ -64,7 +64,7 @@ int gpio_export(unsigned int gpio)
 int gpio_unexport(unsigned int gpio)
 {
 	int fd, len;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
  
 	fd = open(SYSFS_GPIO_DIR "/unexport", O_WRONLY);
 	if (fd < 0) {
@@ -84,7 +84,7 @@ int gpio_unexport(unsigned int gpio)
 int gpio_set_dir(unsigned int gpio, unsigned int out_flag)
 {
 	int fd;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
  
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%d/direction", gpio);
  
@@ -109,7 +109,7 @@ int gpio_set_dir(unsigned int gpio, unsigned int out_flag)
 int gpio_set_value(unsigned int gpio, unsigned int value)
 {
 	int fd;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
  
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
  
@@ -134,7 +134,7 @@ int gpio_set_value(unsigned int gpio, unsigned int value)
 int gpio_get_value(unsigned int gpio, unsigned int *value)
 {
 	int fd;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
 	char ch;
 
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
@@ -165,7 +165,7 @@ int gpio_get_value(unsigned int gpio, unsigned int *value)
 int gpio_set_edge(unsigned int gpio, char *edge)
 {
 	int fd;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
 
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/edge", gpio);
  
@@ -187,7 +187,7 @@ int gpio_set_edge(unsigned int gpio, char *edge)
 int gpio_fd_open(unsigned int gpio)
 {
 	int fd;
-	char buf[MAX_BUF];
+	char buf[GPIO_MAX_BUF];
 
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
  
@@ -216,7 +216,7 @@ int main(int argc, char **argv, char **envp)
 	struct pollfd fdset[2];
 	int nfds = 2;
 	int gpio_fd, timeout, rc;
-	char *buf[MAX_BUF];
+	char *buf[GPIO_MAX_BUF];
 	unsigned int gpio;
 	int len;
 
@@ -258,7 +258,7 @@ int main(int argc, char **argv, char **envp)
 		}
             
 		if (fdset[1].revents & POLLPRI) {
-			len = read(fdset[1].fd, buf, MAX_BUF);
+			len = read(fdset[1].fd, buf, GPIO_MAX_BUF);
 			printf("\npoll() GPIO %d interrupt occurred\n", gpio);
 		}
 

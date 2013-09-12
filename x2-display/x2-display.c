@@ -39,6 +39,8 @@ void *timing_func();
 // globals
 
 #define DEFAULT_PORT 10000
+#define POLL_TIMEOUT 3 * 1000  // 3 seconds
+
 
 pthread_mutex_t lock;
 bool keepalive = true;
@@ -108,56 +110,78 @@ int main(int argc, char **argv) {
   struct sockaddr_in clientaddr;
   socklen_t clientlen = sizeof(clientaddr);
 
-  while (1) {
-    // accept: wait for a connection request
-    int connfd = accept(listenfd, (struct sockaddr *) &clientaddr, &clientlen);
-    if (connfd < 0)
-      error("ERROR on accept");
+  struct pollfd fdset[1];
+  memset((void*)fdset, 0, sizeof(fdset));
+  fdset[0].fd = listenfd;
+  fdset[0].events = POLLIN;
 
-    // read header command
-    char header;
-    read(connfd, &header, 1);
-    if (header == '0') {
-      // read panel data length
-      char buf[4];
-      int n = read(connfd, buf, 4);
-      if (n < 0) error("ERROR reading from socket");
-      uint32_t datalen = (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3];
-      printf("length = %d\n", datalen);
+  while (keepalive) {
+    // poll: wait for a connection request
+    poll(fdset, 1, POLL_TIMEOUT);
 
-      // determine fill index
-      pthread_mutex_lock(&lock);
-      if (draw_idx == 0 || to_draw_idx == 0)
-        if (draw_idx == 1 || to_draw_idx == 1)
-          fill_idx = 2;
-        else
-          fill_idx = 1;
-      else
-        fill_idx = 0;
-      pthread_mutex_unlock(&lock);
+    if (fdset[0].revents == POLLIN) {
+      printf("Received connection\n");
 
-      // read panel data from the client
-      bzero(panels[fill_idx], PANEL_SIZE);
-      unsigned int offset = 0;
-      while (offset < datalen * 4) {
-        n = read(connfd, panels[fill_idx] + offset, BUFSIZE);
+      // accept connection request
+      int connfd = accept(fdset[0].fd, (struct sockaddr *) &clientaddr, &clientlen);
+      if (connfd < 0)
+        error("ERROR on accept");
+
+      // read header command
+      char header;
+      read(connfd, &header, 1);
+      if (header == '0') {
+        // read panel data length
+        char buf[4];
+        int n = read(connfd, buf, 4);
         if (n < 0) error("ERROR reading from socket");
-        offset += n;
+        uint32_t datalen = (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3];
+        printf("length = %d\n", datalen);
+
+        // determine fill index
+        pthread_mutex_lock(&lock);
+        if (draw_idx == 0 || to_draw_idx == 0)
+          if (draw_idx == 1 || to_draw_idx == 1)
+            fill_idx = 2;
+          else
+            fill_idx = 1;
+        else
+          fill_idx = 0;
+        pthread_mutex_unlock(&lock);
+
+        // read panel data from the client
+        bzero(panels[fill_idx], PANEL_SIZE);
+        unsigned int offset = 0;
+        while (offset < datalen * 4) {
+          n = read(connfd, panels[fill_idx] + offset, BUFSIZE);
+          if (n < 0) error("ERROR reading from socket");
+          offset += n;
+        }
+
+        // set to-draw index
+        pthread_mutex_lock(&lock);
+        to_draw_idx = fill_idx;
+        pthread_mutex_unlock(&lock);
+
+        // write fps back to client
+        n = write(connfd, &fps, sizeof(fps));
+        if (n < 0)
+          error("ERROR writing to socket");
       }
 
-      // set to-draw index
-      pthread_mutex_lock(&lock);
-      to_draw_idx = fill_idx;
-      pthread_mutex_unlock(&lock);
-
-      // write fps back to client
-      n = write(connfd, &fps, sizeof(fps));
-      if (n < 0)
-        error("ERROR writing to socket");
+      close(connfd);
     }
-
-    close(connfd);
   }
+
+  close(listenfd);
+  printf("Server shutdown\n");
+
+  printf("Waiting for other threads to complete\n");
+  pthread_join(timing_thread, NULL);
+  pthread_join(drawing_thread, NULL);
+
+  printf("Program completed. Exiting.\n");
+  pthread_exit(NULL);
 }
 
 /*
@@ -185,8 +209,7 @@ int socket_init(int portno) {
    * Eliminates "ERROR on binding: Address already in use" error.
    */
   int optval = 1; // flag value for setsockopt
-  setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,
-	     (const void *)&optval , sizeof(int));
+  setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
 
   // build the server's internet address
   struct sockaddr_in serveraddr; // server's addr
@@ -241,7 +264,7 @@ void *drawing_func() {
       }
 
       uint64_t end_time_usec = start_usec + ((slice_idx + 1) * display_interval_usec);
-      printf("%d now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", slice_idx, start_usec, end_time_usec, end_time_usec - start_usec);
+      // printf("%d now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", slice_idx, start_usec, end_time_usec, end_time_usec - start_usec);
 
       // alternate frame buffers on each draw command
       frame_num = (frame_num + 1) % 2;
@@ -277,7 +300,7 @@ void *drawing_func() {
       }
     }
   }
-  
+
   // blank all strips
   ledscape_frame_t * const frame = ledscape_frame(leds, frame_num);
   for (unsigned int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++)
@@ -309,10 +332,8 @@ void *timing_func() {
 
   int gpio_fd = gpio_fd_open(hall_sensor_gpio);
 
-  int nfds = 1;
-  struct pollfd fdset[nfds];
-  int timeout = 3 * 1000;  // 3 seconds
-  char *buf[MAX_BUF];
+  struct pollfd fdset[1];
+  char *buf[GPIO_MAX_BUF];
 
   uint64_t start_rotation_time_usec = 0;
 
@@ -322,10 +343,10 @@ void *timing_func() {
     fdset[0].events = POLLPRI;
 
     // blocking read of gpio pin for hall effect sensor
-    poll(fdset, nfds, timeout);
+    poll(fdset, 1, POLL_TIMEOUT);
 
     if (fdset[0].revents & POLLPRI) {
-      read(fdset[0].fd, buf, MAX_BUF);
+      read(fdset[0].fd, buf, GPIO_MAX_BUF);
       printf("poll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
 
       // GPIO interrupt occurred - calculate rotation timing
