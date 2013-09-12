@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "ledscape.h"
-#include "strip_map.h"
+#include "strip-map.h"
 
 static void
 ledscape_fill_color(

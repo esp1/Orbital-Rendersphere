@@ -1,6 +1,4 @@
-#ifndef _strip_map_h_
-#define _strip_map_h_
-
+//externs
 int strip_map[] = {
   11, //  0
   17, //  1
@@ -34,6 +32,3 @@ int strip_map[] = {
 };
 
 //unused: 15, 6, 5, 3, 2
-
-#endif
-
