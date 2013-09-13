@@ -10,8 +10,8 @@
 #include "x2-server.h"
 
 
-#define MAX_DISPLAY_INTERVAL_USEC USEC_PER_SECOND / 10
-#define POLL_TIMEOUT 3 * 1000  // 3 seconds
+#define MAX_DISPLAY_INTERVAL_USEC (USEC_PER_SECOND / 10)
+#define POLL_TIMEOUT (3 * 1000)  // 3 seconds
 
 
 // externs

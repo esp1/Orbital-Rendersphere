@@ -28,7 +28,7 @@
 #include <time.h>
 */
 
-#define POLL_TIMEOUT 3 * 1000  // 3 seconds
+#define POLL_TIMEOUT (3 * 1000)  // 3 seconds
 
 
 // externs
