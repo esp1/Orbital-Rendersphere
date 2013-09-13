@@ -51,14 +51,16 @@ void *drawing_func() {
         unsigned int row = strip_idx / 4;  // range: 0-6
         unsigned int y_offset = row * NUM_PIXELS_PER_STRIP;
         for (unsigned int pixel_idx = 0; pixel_idx < NUM_PIXELS_PER_STRIP; pixel_idx++) {
-          unsigned int strip = (row * 4) +  // baseline offset for row
-                               ((strip_idx + quadrant) % 4);  // index in row
-
+          // get RGB data from panel
           unsigned int y = y_offset + (row < 3 ? pixel_idx : NUM_PIXELS_PER_STRIP - 1 - pixel_idx);  // invert pixel_idx for lower hemisphere
-          unsigned int x = ((quadrant * QUADRANT_WIDTH) + slice_idx) % NUM_SLICES;
+          unsigned int x = slice_idx;
           uint8_t r = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 1];
           uint8_t g = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 2];
           uint8_t b = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 3];
+
+          // offset strip index according to quadrant
+          unsigned int row_origin = row * 4;  // baseline offset for row
+          unsigned int strip = row_origin + (((strip_idx - row_origin) + quadrant) % 4);  // index in row
 
           ledscape_set_color(frame, strip_map[strip], pixel_idx, r, g, b);
         }
@@ -75,7 +77,7 @@ void *drawing_func() {
       }
     }
   }
-  
+
   // blank all strips
   ledscape_frame_t * const frame = ledscape_frame(leds, frame_num);
   for (unsigned int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++)

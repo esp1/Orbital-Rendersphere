@@ -62,10 +62,10 @@ void *timing_func() {
       uint64_t now_usec = gettime();
 
       uint64_t rotation_usec = now_usec - start_rotation_time_usec;
-      display_interval_usec = rotation_usec / 224;
+      display_interval_usec = rotation_usec / NUM_SLICES;
       if (display_interval_usec > MAX_DISPLAY_INTERVAL_USEC)
         display_interval_usec = MAX_DISPLAY_INTERVAL_USEC;
-      fps = ((double) USEC_PER_SECOND) / (display_interval_usec * 224);
+      fps = ((double) USEC_PER_SECOND) / (display_interval_usec * NUM_SLICES);
 
       start_rotation_time_usec = now_usec;
     }
