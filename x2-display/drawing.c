@@ -55,10 +55,10 @@ void *drawing_func() {
                                ((strip_idx + quadrant) % 4);  // index in row
 
           unsigned int y = y_offset + (row < 3 ? pixel_idx : NUM_PIXELS_PER_STRIP - 1 - pixel_idx);  // invert pixel_idx for lower hemisphere
-          unsigned int x = (slice_idx % QUADRANT_WIDTH);
-          uint8_t r = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 1];
-          uint8_t g = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 2];
-          uint8_t b = panels[draw_idx][(((y * QUADRANT_WIDTH) + x) * PIXEL_SIZE) + 3];
+          unsigned int x = ((quadrant * QUADRANT_WIDTH) + slice_idx) % NUM_SLICES;
+          uint8_t r = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 1];
+          uint8_t g = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 2];
+          uint8_t b = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 3];
 
           ledscape_set_color(frame, strip_map[strip], pixel_idx, r, g, b);
         }
