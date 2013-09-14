@@ -51,7 +51,7 @@ void *drawing_func() {
       // copy panel.frame -> frame
       for (unsigned int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++) {
         unsigned int row = strip_idx / 4;  // range: 0-6
-	unsigned int col = (4 - strip_idx) % 4;  // range: 0-3
+        unsigned int col = (4 - strip_idx) % 4;  // range: 0-3
 
         unsigned int y_offset = row * NUM_PIXELS_PER_STRIP;
         for (unsigned int pixel_idx = 0; pixel_idx < NUM_PIXELS_PER_STRIP; pixel_idx++) {
