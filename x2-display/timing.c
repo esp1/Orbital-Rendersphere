@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "constants.h"
+#include "debug.h"
 #include "drawing.h"
 #include "gpio.h"
 #include "x2-server.h"
@@ -55,7 +56,9 @@ void *timing_func() {
 
     if (fdset[0].revents & POLLPRI) {
       read(fdset[0].fd, buf, GPIO_MAX_BUF);
+#if DEBUG
       printf("poll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
+#endif
 
       // GPIO interrupt occurred - calculate rotation timing
       new_frame = true;

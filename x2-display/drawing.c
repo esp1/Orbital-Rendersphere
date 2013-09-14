@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "debug.h"
 #include "drawing.h"
 #include "strip-map.h"
 #include "timing.h"
@@ -39,7 +40,9 @@ void *drawing_func() {
       }
 
       uint64_t end_time_usec = start_usec + ((slice_idx + 1) * display_interval_usec);
+#if DEBUG
       printf("%d now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", slice_idx, start_usec, end_time_usec, end_time_usec - start_usec);
+#endif
 
       // alternate frame buffers on each draw command
       frame_num = (frame_num + 1) % 2;
