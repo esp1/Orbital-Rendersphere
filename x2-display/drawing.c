@@ -49,7 +49,7 @@ void *drawing_func() {
       ledscape_frame_t * const frame = ledscape_frame(leds, frame_num);
 
       // copy panel.frame -> frame
-      for (unsigned int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++) {
+      for (int strip_idx = 0; strip_idx < LEDSCAPE_NUM_STRIPS; strip_idx++) {
         unsigned int row = strip_idx / 4;  // range: 0-6
         unsigned int col = (4 - strip_idx) % 4;  // range: 0-3
 
@@ -57,7 +57,7 @@ void *drawing_func() {
         for (unsigned int pixel_idx = 0; pixel_idx < NUM_PIXELS_PER_STRIP; pixel_idx++) {
           // get RGB data from panel
           unsigned int y = y_offset + (row < 3 ? pixel_idx : NUM_PIXELS_PER_STRIP - 1 - pixel_idx);  // invert pixel_idx for lower hemisphere
-          unsigned int x = (slice_idx + (col * QUADRANT_WIDTH)) % NUM_SLICES;
+          unsigned int x = (NUM_SLICES - 1 - (slice_idx + (col * QUADRANT_WIDTH))) % NUM_SLICES;
           uint8_t r = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 1];
           uint8_t g = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 2];
           uint8_t b = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 3];
