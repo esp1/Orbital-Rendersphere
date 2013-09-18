@@ -15,7 +15,7 @@
  //*  Reset is 50 usec
  //
  // Pins are not contiguous.
- // 16 pins on GPIO0: 2 3 4 5 7 12 13 14 15 20 22 23 26 27 30 31
+ // 16 pins on GPIO0: 2 3 8 9 7 10 11 14 15 20 22 23 26 27 30 31
  // 10 pins on GPIO1: 12 13 14 15 16 17 18 19 28 29
  //  5 pins on GPIO2: 1 2 3 4 5
  //  8 pins on GPIO3: 14 15 16 17 18 19 20 21
@@ -42,17 +42,17 @@
  //* |  | |______|
  //* 0  250 600  1250 offset
  //*    250 350   650 delta
- //* 
+ //*
  //*/
 
 // Pins available in GPIO0
 #define gpio0_bit0 2
 #define gpio0_bit1 3
-#define gpio0_bit2 4
-#define gpio0_bit3 5
+#define gpio0_bit2 8
+#define gpio0_bit3 9
 #define gpio0_bit4 7
-#define gpio0_bit5 12
-#define gpio0_bit6 13
+#define gpio0_bit5 10
+#define gpio0_bit6 11
 #define gpio0_bit7 14
 #define gpio0_bit8 15
 #define gpio0_bit9 20
@@ -87,10 +87,10 @@
 #define gpio3_bit1 19
 
 /** Generate a bitmask of which pins in GPIO0-3 are used.
- * 
+ *
  * This is used to bring all the pins up for the start of
  * the bit, and then back down at the end of the 1 bits.
- * 
+ *
  * \todo wtf "parameter too long": only 128 chars allowed?
  */
 #define GPIO0_LED_MASK (0\
@@ -189,7 +189,7 @@ lab:
     MOV r8, 0x22000 // control register
 lab:
 	LBBO r9, r8, 0xC, 4 // read the cycle counter
-	SUB r9, r9, sleep_counter 
+	SUB r9, r9, sleep_counter
 #ifdef CONFIG_WS2812
 	QBGT lab, r9, 2*(lab)/5
 #else
