@@ -1,4 +1,10 @@
-To enable the PRU subsystem:
+SSL install is broken, disable certs:
+http://derekmolloy.ie/fixing-git-and-curl-certificates-problem-on-beaglebone-blac/
+
+git config --global http.sslVerify false
+
+
+Enable the PRU subsystem:
 
 cd /boot
 cp am335x-boneblack.dtb am335x-boneblack.dtb_orig
@@ -13,3 +19,21 @@ status = "okay";
 
 dtc -I dts -O dtb am335x-boneblack.dts_pru > am335x-boneblack.dtb_pru
 cp am335x-boneblack.dtb_pru am335x-boneblack.dtb
+
+
+Disable the HDMI virtual cape to allow access to additional GPIO pins:
+http://www.logicsupply.com/blog/2013/07/18/disabling-the-beaglebone-black-hdmi-cape/
+
+mount /dev/mmcblk0p1 /mnt/card
+
+Edit /mnt/card/uEnv.txt and change contents to:
+optargs=quiet capemgr.disable_partno=BB-BONELT-HDMI,BB-BONELT-HDMIN
+
+umount /mnt/card
+shutdown -r now
+
+To see what capes are enabled:
+cat /sys/devices/bone_capemgr.*/slots
+
+Every line shows something like “P-O-L” or “P-O–”. The letter “L” means the Cape is enabled; no letter “L” means that it is disabled.
+
