@@ -17,6 +17,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "debug.h"
 #include "drawing.h"
 #include "timing.h"
 
@@ -97,7 +98,9 @@ void *server_func(int port) {
     poll(fdset, 1, POLL_TIMEOUT);
 
     if (fdset[0].revents == POLLIN) {
+#if DEBUG
       printf("Received connection\n");
+#endif
 
       // accept connection request
       int connfd = accept(fdset[0].fd, (struct sockaddr *) &clientaddr, &clientlen);
@@ -113,7 +116,9 @@ void *server_func(int port) {
         int n = read(connfd, buf, 4);
         if (n < 0) error("ERROR reading from socket");
         uint32_t datalen = (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3];
+#if DEBUG
         printf("length = %d\n", datalen);
+#endif
 
         // determine fill index
         pthread_mutex_lock(&lock);
