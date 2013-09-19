@@ -88,9 +88,9 @@ float read_float(int connfd) {
   return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
 }
 
-void write_fps(int connfd) {
-  // write fps back to client
-  int n = write(connfd, &fps, sizeof(fps));
+void write_rps(int connfd) {
+  // write rotations per second back to client
+  int n = write(connfd, &rps, sizeof(rps));
   if (n < 0)
     error("ERROR writing to socket");
 }
@@ -157,11 +157,11 @@ void *server_func(int port) {
         to_draw_idx = fill_idx;
         pthread_mutex_unlock(&lock);
 
-        // write fps back to client
-        write_fps(connfd);
+        // write rotations per second back to client
+        write_rps(connfd);
       } else if (command == '?') {
-        // write fps back to client
-        write_fps(connfd);
+        // write rotations per second back to client
+        write_rps(connfd);
       } else if (command == 'x') {
         // x offset
         uint32_t value = set_x_offset(read_uint32(connfd));

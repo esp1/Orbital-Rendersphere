@@ -7,7 +7,7 @@
 
 extern bool new_frame;
 extern uint64_t display_interval_usec;
-extern double fps;
+extern double rps;  // rotations per second
 
 
 extern uint64_t gettime();

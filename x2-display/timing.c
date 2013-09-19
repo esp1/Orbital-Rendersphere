@@ -18,7 +18,7 @@
 // externs
 bool new_frame = true;
 uint64_t display_interval_usec = MAX_DISPLAY_INTERVAL_USEC;
-double fps = 0.0;
+double rps = 0.0;
 
 
 unsigned int hall_sensor_gpio = 61;  // gpio1_29 = 32 + 29
@@ -68,7 +68,7 @@ void *timing_func() {
       display_interval_usec = rotation_usec / NUM_SLICES;
       if (display_interval_usec > MAX_DISPLAY_INTERVAL_USEC)
         display_interval_usec = MAX_DISPLAY_INTERVAL_USEC;
-      fps = ((double) USEC_PER_SECOND) / (display_interval_usec * NUM_SLICES);
+      rps = ((double) USEC_PER_SECOND) / (display_interval_usec * NUM_SLICES);
 
       start_rotation_time_usec = now_usec;
     }
