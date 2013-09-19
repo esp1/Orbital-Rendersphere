@@ -23,15 +23,12 @@
 
 
 #define POLL_TIMEOUT (3 * 1000)  // 3 seconds
+#define BUFSIZE 1024
 
 
 // externs
 pthread_mutex_t lock;
 bool keepalive = true;
-
-
-
-#define BUFSIZE 1024
 
 
 /*
