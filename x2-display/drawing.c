@@ -65,9 +65,9 @@ void *drawing_func() {
           uint8_t g = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 2];
           uint8_t b = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 3];
           
-          r = (r * brightness) + contrast;
-          g = (g * brightness) + contrast;
-          b = (b * brightness) + contrast;
+          r = (r * contrast) + brightness;
+          g = (g * contrast) + brightness;
+          b = (b * contrast) + brightness;
 
           ledscape_set_color(frame, strip_map[strip_idx], pixel_idx, r, g, b);
         }
