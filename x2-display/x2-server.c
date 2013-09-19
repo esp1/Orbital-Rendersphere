@@ -81,6 +81,13 @@ int socket_init(int portno) {
   return listenfd;
 }
 
+void write_fps(int connfd) {
+  // write fps back to client
+  int n = write(connfd, &fps, sizeof(fps));
+  if (n < 0)
+    error("ERROR writing to socket");
+}
+
 void *server_func(int port) {
   printf("Server listening on port %d\n", port);
   int listenfd = socket_init(port);
@@ -110,7 +117,10 @@ void *server_func(int port) {
       // read header command
       char header;
       read(connfd, &header, 1);
-      if (header == '0') {
+      if (header == '?') {
+        // write fps back to client
+        write_fps(connfd);
+      } else if (header == '0') {
         // read panel data length
         char buf[4];
         int n = read(connfd, buf, 4);
@@ -146,9 +156,7 @@ void *server_func(int port) {
         pthread_mutex_unlock(&lock);
 
         // write fps back to client
-        n = write(connfd, &fps, sizeof(fps));
-        if (n < 0)
-          error("ERROR writing to socket");
+        write_fps(connfd);
       }
 
       close(connfd);
