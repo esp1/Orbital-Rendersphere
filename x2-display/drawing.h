@@ -24,6 +24,7 @@ extern char panels[3][PANEL_SIZE];
 extern int draw_idx;
 extern int to_draw_idx;
 extern int fill_idx;
+extern uint32_t fps;  // frames per second
 
 
 extern void drawing_init();

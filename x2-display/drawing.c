@@ -14,6 +14,7 @@ char panels[3][PANEL_SIZE];
 int draw_idx = 0;
 int to_draw_idx = 0;
 int fill_idx;
+uint32_t fps = 0;
 
 
 ledscape_t * leds;
@@ -29,7 +30,13 @@ void drawing_init() {
 void *drawing_func() {
   unsigned int frame_num = 0;
 
+  time_t last_sec = time(NULL);
+  unsigned int last_i = 0;
+  unsigned int i = 0;
+
   while (keepalive) {
+    i++;
+
     // set draw index from to-draw index
     pthread_mutex_lock(&lock);
     draw_idx = to_draw_idx;
@@ -82,6 +89,14 @@ void *drawing_func() {
       while (now_usec < end_time_usec && !new_frame) {
         now_usec = gettime();
       }
+    }
+
+    // track (panel) frames per second
+    time_t now_sec = time(NULL);
+    if (now_sec != last_sec) {
+      fps = i - last_i;
+      last_i = i;
+      last_sec = now_sec;
     }
   }
 
