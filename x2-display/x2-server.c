@@ -13,12 +13,12 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include "debug.h"
 #include "drawing.h"
+#include "err.h"
 #include "timing.h"
 
 
@@ -30,14 +30,6 @@
 pthread_mutex_t lock;
 bool keepalive = true;
 
-
-/*
- * error - wrapper for perror
- */
-void error(char *msg) {
-  perror(msg);
-  exit(1);
-}
 
 int socket_init(int portno) {
   int listenfd = socket(AF_INET, SOCK_STREAM, 0); // listening socket
@@ -74,7 +66,7 @@ int socket_init(int portno) {
 char *read_4bytes(int connfd) {
   char buf[4];
   int n = read(connfd, buf, 4);
-  if (n < 0) error("ERROR reading from socket");
+  if (n < 0) error("ERROR reading 4 bytes from socket");
   return buf;
 }
 
@@ -88,11 +80,16 @@ float read_float(int connfd) {
   return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
 }
 
-void write_rps(int connfd) {
+void write_stats(int connfd) {
   // write rotations per second back to client
   int n = write(connfd, &rps, sizeof(rps));
   if (n < 0)
-    error("ERROR writing to socket");
+    error("ERROR writing RPS to socket");
+
+  // write frames per second back to client
+  n = write(connfd, &fps, sizeof(fps));
+  if (n < 0)
+    error("ERROR writing FPS to socket");
 }
 
 void *server_func(int port) {
@@ -124,7 +121,9 @@ void *server_func(int port) {
       // read command
       int n;
       char command;
-      read(connfd, &command, 1);
+      n = read(connfd, &command, 1);
+      if (n < 0)
+	error("ERROR reading command from socket");
       if (command == '0') {
         // read panel data length
         uint32_t datalen = read_uint32(connfd);
@@ -148,7 +147,7 @@ void *server_func(int port) {
         unsigned int offset = 0;
         while (offset < datalen * 4) {
           n = read(connfd, panels[fill_idx] + offset, BUFSIZE);
-          if (n < 0) error("ERROR reading from socket");
+          if (n < 0) error("ERROR reading panel data from socket");
           offset += n;
         }
 
@@ -157,29 +156,29 @@ void *server_func(int port) {
         to_draw_idx = fill_idx;
         pthread_mutex_unlock(&lock);
 
-        // write rotations per second back to client
-        write_rps(connfd);
+        // write stats back to client
+        write_stats(connfd);
       } else if (command == '?') {
-        // write rotations per second back to client
-        write_rps(connfd);
+        // write stats back to client
+        write_stats(connfd);
       } else if (command == 'x') {
         // x offset
         uint32_t value = set_x_offset(read_uint32(connfd));
 	n = write(connfd, &value, sizeof(value));
 	if (n < 0)
-	  error("ERROR writing to socket");
+	  error("ERROR writing x offset value to socket");
       } else if (command == 'b') {
         // read brightness
         float value = set_brightness(read_float(connfd));
 	n = write(connfd, &value, sizeof(value));
 	if (n < 0)
-	  error("ERROR writing to socket");
+	  error("ERROR writing brightness value to socket");
       } else if (command == 'c') {
         // read contrast
         float value = set_contrast(read_float(connfd));
 	n = write(connfd, &value, sizeof(value));
 	if (n < 0)
-	  error("ERROR writing to socket");
+	  error("ERROR writing contrast value to socket");
       }
 
       close(connfd);

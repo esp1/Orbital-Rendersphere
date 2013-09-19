@@ -5,7 +5,7 @@
 TARGETS += rgb-test
 TARGETS += x2-display
 
-LEDSCAPE_OBJS = ledscape.o pru.o bitslice.o util.o gpio.o drawing.o timing.o strip-map.o x2-server.o
+LEDSCAPE_OBJS = ledscape.o pru.o bitslice.o util.o gpio.o drawing.o timing.o strip-map.o x2-server.o err.o
 LEDSCAPE_LIB := libledscape.a
 
 all: $(TARGETS) ws281x.bin
