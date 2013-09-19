@@ -17,6 +17,9 @@ int fill_idx;
 
 
 ledscape_t * leds;
+uint32_t x_offset = 0;
+float brightness = 0;
+float contrast = 1;
 
 
 void drawing_init() {
@@ -57,10 +60,14 @@ void *drawing_func() {
         for (unsigned int pixel_idx = 0; pixel_idx < NUM_PIXELS_PER_STRIP; pixel_idx++) {
           // get RGB data from panel
           unsigned int y = y_offset + (row < 3 ? pixel_idx : NUM_PIXELS_PER_STRIP - 1 - pixel_idx);  // invert pixel_idx for lower hemisphere
-          unsigned int x = (NUM_SLICES - 1 - (slice_idx + (col * QUADRANT_WIDTH))) % NUM_SLICES;
+          unsigned int x = (NUM_SLICES - 1 - (x_offset + slice_idx + (col * QUADRANT_WIDTH))) % NUM_SLICES;
           uint8_t r = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 1];
           uint8_t g = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 2];
           uint8_t b = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 3];
+          
+          r = (r * brightness) + contrast;
+          g = (g * brightness) + contrast;
+          b = (b * brightness) + contrast;
 
           ledscape_set_color(frame, strip_map[strip_idx], pixel_idx, r, g, b);
         }
@@ -90,4 +97,28 @@ void *drawing_func() {
 
   printf("Exiting drawing thread\n");
   return NULL;
+}
+
+uint32_t set_x_offset(uint32_t value) {
+  x_offset = value;
+#if DEBUG
+  printf("x offset: %d\n", x_offset);
+#endif
+  return x_offset;
+}
+
+float set_brightness(float value) {
+  brightness = value;
+#if DEBUG
+  printf("brightness: %f\n", brightness);
+#endif
+  return brightness;
+}
+
+float set_contrast(float value) {
+  contrast = value;
+#if DEBUG
+  printf("contrast: %f\n", contrast);
+#endif
+  return contrast;
 }

@@ -28,6 +28,9 @@ extern int fill_idx;
 
 extern void drawing_init();
 extern void *drawing_func();
+extern uint32_t set_x_offset(uint32_t value);
+extern float set_brightness(float value);
+extern float set_contrast(float value);
 
 
 #endif

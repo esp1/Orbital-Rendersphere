@@ -71,6 +71,23 @@ int socket_init(int portno) {
   return listenfd;
 }
 
+char *read_4bytes(int connfd) {
+  char buf[4];
+  int n = read(connfd, buf, 4);
+  if (n < 0) error("ERROR reading from socket");
+  return buf;
+}
+
+uint32_t read_uint32(int connfd) {
+  char *b = read_4bytes(connfd);
+  return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
+}
+
+float read_float(int connfd) {
+  char *b = read_4bytes(connfd);
+  return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
+}
+
 void write_fps(int connfd) {
   // write fps back to client
   int n = write(connfd, &fps, sizeof(fps));
@@ -104,18 +121,13 @@ void *server_func(int port) {
       if (connfd < 0)
         error("ERROR on accept");
 
-      // read header command
-      char header;
-      read(connfd, &header, 1);
-      if (header == '?') {
-        // write fps back to client
-        write_fps(connfd);
-      } else if (header == '0') {
+      // read command
+      int n;
+      char command;
+      read(connfd, &command, 1);
+      if (command == '0') {
         // read panel data length
-        char buf[4];
-        int n = read(connfd, buf, 4);
-        if (n < 0) error("ERROR reading from socket");
-        uint32_t datalen = (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3];
+        uint32_t datalen = read_uint32(connfd);
 #if DEBUG
         printf("length = %d\n", datalen);
 #endif
@@ -147,6 +159,27 @@ void *server_func(int port) {
 
         // write fps back to client
         write_fps(connfd);
+      } else if (command == '?') {
+        // write fps back to client
+        write_fps(connfd);
+      } else if (command == 'x') {
+        // x offset
+        uint32_t value = set_x_offset(read_uint32(connfd));
+	n = write(connfd, &value, sizeof(value));
+	if (n < 0)
+	  error("ERROR writing to socket");
+      } else if (command == 'b') {
+        // read brightness
+        float value = set_brightness(read_float(connfd));
+	n = write(connfd, &value, sizeof(value));
+	if (n < 0)
+	  error("ERROR writing to socket");
+      } else if (command == 'c') {
+        // read contrast
+        float value = set_contrast(read_float(connfd));
+	n = write(connfd, &value, sizeof(value));
+	if (n < 0)
+	  error("ERROR writing to socket");
       }
 
       close(connfd);
