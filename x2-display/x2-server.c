@@ -21,13 +21,6 @@
 #include "drawing.h"
 #include "timing.h"
 
-/*
-#include <inttypes.h>
-#include <stdint.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
-*/
 
 #define POLL_TIMEOUT (3 * 1000)  // 3 seconds
 
