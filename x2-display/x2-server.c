@@ -109,7 +109,7 @@ void *server_func(int port) {
     poll(fdset, 1, POLL_TIMEOUT);
 
     if (fdset[0].revents == POLLIN) {
-#if DEBUG
+#if DEBUG_SERVER
       printf("Received connection\n");
 #endif
 
@@ -127,7 +127,7 @@ void *server_func(int port) {
       if (command == '0') {
         // read panel data length
         uint32_t datalen = read_uint32(connfd);
-#if DEBUG
+#if DEBUG_SERVER
         printf("length = %d\n", datalen);
 #endif
 

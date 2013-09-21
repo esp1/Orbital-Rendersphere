@@ -50,7 +50,7 @@ void *drawing_func() {
       }
 
       uint64_t end_time_usec = start_usec + ((slice_idx + 1) * display_interval_usec);
-#if DEBUG
+#if DEBUG_DRAWING
       printf("%d now %" PRIu64 ", end %" PRIu64 ", diff %" PRIu64 "\n", slice_idx, start_usec, end_time_usec, end_time_usec - start_usec);
 #endif
 
@@ -71,7 +71,7 @@ void *drawing_func() {
           uint8_t r = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 1];
           uint8_t g = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 2];
           uint8_t b = panels[draw_idx][(((y * NUM_SLICES) + x) * PIXEL_SIZE) + 3];
-          
+
           r = (r * contrast) + brightness;
           g = (g * contrast) + brightness;
           b = (b * contrast) + brightness;
@@ -94,7 +94,7 @@ void *drawing_func() {
     // track (panel) frames per second
     time_t now_sec = time(NULL);
     if (now_sec != last_sec) {
-      fps = i - last_i;
+      fps = (i - last_i) / (now_sec - last_sec);
       last_i = i;
       last_sec = now_sec;
     }
@@ -116,7 +116,7 @@ void *drawing_func() {
 
 uint32_t set_x_offset(uint32_t value) {
   x_offset = value;
-#if DEBUG
+#if DEBUG_DRAW_SETTINGS
   printf("x offset: %d\n", x_offset);
 #endif
   return x_offset;
@@ -124,7 +124,7 @@ uint32_t set_x_offset(uint32_t value) {
 
 float set_brightness(float value) {
   brightness = value;
-#if DEBUG
+#if DEBUG_DRAW_SETTINGS
   printf("brightness: %f\n", brightness);
 #endif
   return brightness;
@@ -132,7 +132,7 @@ float set_brightness(float value) {
 
 float set_contrast(float value) {
   contrast = value;
-#if DEBUG
+#if DEBUG_DRAW_SETTINGS
   printf("contrast: %f\n", contrast);
 #endif
   return contrast;

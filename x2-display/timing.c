@@ -59,7 +59,7 @@ void *timing_func() {
       int n = read(fdset[0].fd, buf, GPIO_MAX_BUF);
       if (n < 0)
 	error("ERROR reading from gpio");
-#if DEBUG
+#if DEBUG_TIMING
       printf("poll() GPIO interrupt - rotation timing %" PRIu64 "\n", display_interval_usec);
 #endif
 
